@@ -47,9 +47,13 @@ namespace GridBlazor.Columns
 
         public abstract string Width { get; set; }
 
+        public bool CrudCustomWith { get; internal set; } = false;
+
         public int CrudWidth { get; set; } = 5;
 
         public int CrudLabelWidth { get; set; } = 2;
+
+        public bool NotDbMapped { get; protected set; } = false;
 
         public bool ColumnSortDefined { get; protected set; } = false;
 
@@ -126,6 +130,16 @@ namespace GridBlazor.Columns
 
         public QueryDictionary<Func<IGridColumnCollection<T>, object>> Calculations { get; set; }
 
+        public Func<ITotalsColumn, string> CssSumClass { get; private set; }
+
+        public Func<ITotalsColumn, string> CssAverageClass { get; private set; }
+
+        public Func<ITotalsColumn, string> CssMaxClass { get; private set; }
+
+        public Func<ITotalsColumn, string> CssMinClass { get; private set; }
+
+        public Func<ITotalsColumn, string> CssCalculationClass { get; private set; }
+
         public QueryDictionary<Total> CalculationValues { get; set; }
 
         public Total SumValue { get; set; }
@@ -168,12 +182,14 @@ namespace GridBlazor.Columns
 
         IGridColumn<T> IColumn<T>.SetCrudWidth(int width)
         {
+            CrudCustomWith = true;
             CrudWidth = width;
             return this;
         }
 
         IGridColumn<T> IColumn<T>.SetCrudWidth(int width, int labelWidth)
         {
+            CrudCustomWith = true;
             CrudWidth = width;
             CrudLabelWidth = labelWidth;
             return this;
@@ -217,6 +233,12 @@ namespace GridBlazor.Columns
                 Name = Guid.NewGuid().ToString();
             HeaderCheckbox = headerCheckbox;
             return RenderComponentAs<CheckboxComponent<T>>((Name, expression, readonlyExpr));
+        }
+
+        public IGridColumn<T> SetNotDbMapped(bool notDbMapped)
+        {
+            NotDbMapped = notDbMapped;
+            return this;
         }
 
         public IGridColumn<T> RenderValueAs(Func<T, string> constraint)
@@ -481,34 +503,40 @@ namespace GridBlazor.Columns
             return this;
         }
 
-        public IGridColumn<T> Sum(bool enabled)
+        public IGridColumn<T> Sum(bool enabled, Func<ITotalsColumn, string> cssSumClass = null)
         {
             IsSumEnabled = enabled;
+            CssSumClass = cssSumClass;
             return this;
         }
 
-        public IGridColumn<T> Average(bool enabled)
+        public IGridColumn<T> Average(bool enabled, Func<ITotalsColumn, string> cssAverageClass = null)
         {
             IsAverageEnabled = enabled;
+            CssAverageClass = cssAverageClass;
             return this;
         }
 
-        public IGridColumn<T> Max(bool enabled)
+        public IGridColumn<T> Max(bool enabled, Func<ITotalsColumn, string> cssMaxClass = null)
         {
             IsMaxEnabled = enabled;
+            CssMaxClass = cssMaxClass;
             return this;
         }
 
-        public IGridColumn<T> Min(bool enabled)
+        public IGridColumn<T> Min(bool enabled, Func<ITotalsColumn, string> cssMinClass = null)
         {
             IsMinEnabled = enabled;
+            CssMinClass = cssMinClass;
             return this;
         }
 
-        public IGridColumn<T> Calculate(string name, Func<IGridColumnCollection<T>, object> calculation)
+        public IGridColumn<T> Calculate(string name, Func<IGridColumnCollection<T>, object> calculation,
+            Func<ITotalsColumn, string> cssCalculationClass = null)
         {
             IsCalculationEnabled = true;
             Calculations.AddParameter(name, calculation);
+            CssCalculationClass = cssCalculationClass;
             return this;
         }
 
@@ -842,7 +870,7 @@ namespace GridBlazor.Columns
         public abstract string FilterWidgetTypeName { get; }
         public object FilterWidgetData { get; protected set; }
 
-        public abstract IColumnSearch<T> Search { get; }
+        public abstract IColumnSearch<T> Search { get; protected set; }
 
         public abstract IColumnTotals<T> Totals { get; }
 
@@ -874,6 +902,7 @@ namespace GridBlazor.Columns
             SubGrids = subGrids;
             ShowCreateSubGrids = showCreateSubGrids;
             SubGridKeys = keys;
+            Search = null;
             return this;
         }
 

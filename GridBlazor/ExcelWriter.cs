@@ -14,7 +14,14 @@ namespace GridBlazor
 {
     public class ExcelCell
     {
-        public string Content { get; set; }
+        private string _content;
+
+        public string Content {
+            get { return _content; }
+            set { 
+                _content = RemoveInvalidXmlChars(value); 
+            }
+        }
         public int ColumnIndex { get; set; }
         public int RowIndex { get; set; }
         public int ColSpan { get; set; }
@@ -37,7 +44,11 @@ namespace GridBlazor
                 || type == typeof(Single) || type == typeof(float) || type == typeof(Int64) || type == typeof(Int16)
                 || type == typeof(UInt64) || type == typeof(UInt32) || type == typeof(UInt16))
                 Type = CellValues.Number;
-            else if (type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(decimal) || type == typeof(byte)
+            else if (type == typeof(DateTime) || type == typeof(DateTimeOffset)
+#if !NETSTANDARD2_1 && !NET5_0
+                || type == typeof(DateOnly) || type == typeof(TimeOnly)
+#endif
+                || type == typeof(decimal) || type == typeof(byte)
                 || type == typeof(Single) || type == typeof(float) || type == typeof(Int64) || type == typeof(Int16)
                 || type == typeof(UInt64) || type == typeof(UInt32) || type == typeof(UInt16))
                 Type = CellValues.Date;
@@ -45,6 +56,11 @@ namespace GridBlazor
                 Type = CellValues.Boolean;
             else
                 Type = CellValues.InlineString;
+        }
+
+        private string RemoveInvalidXmlChars(string content)
+        {
+            return new string(content?.Where(ch => System.Xml.XmlConvert.IsXmlChar(ch)).ToArray());
         }
     }
 

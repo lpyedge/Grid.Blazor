@@ -44,6 +44,8 @@ namespace GridShared.Searching
                 // bool columns are not searched as a workaround until the final release of EF Core 3.0
                 if (targetType == typeof(bool)) return null;
 
+                if (targetType == typeof(Enum) || targetType.BaseType == typeof(Enum)) return null;
+
                 if (onlyTextColumns && targetType != typeof(string))
                     return null;
 
@@ -72,8 +74,15 @@ namespace GridShared.Searching
                     }
                 }
 
+                if (targetType.IsGenericType && targetType.Name == "ICollection`1")
+                {
+                    PropertyInfo count = pi.PropertyType.GetProperty("Count");
+                    firstExpression = Expression.Property(firstExpression, count);
 
-                if (targetType != typeof(string))
+                    MethodInfo toString = typeof(Int32).GetMethod("ToString", Type.EmptyTypes);
+                    firstExpression = Expression.Call(firstExpression, toString);
+                }
+                else if (targetType != typeof(string))
                 {
                     if (isNullable)
                     {
@@ -86,6 +95,7 @@ namespace GridShared.Searching
 
                         firstExpression = Expression.Property(firstExpression, pi.PropertyType.GetProperty("Value"));
                     }
+
                     // add ToString method to non string columns
                     MethodInfo toString = targetType.GetMethod("ToString", Type.EmptyTypes);
                     firstExpression = Expression.Call(firstExpression, toString);

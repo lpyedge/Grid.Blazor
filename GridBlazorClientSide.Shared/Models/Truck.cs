@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GridBlazorClientSide.Shared.Models
 {
@@ -10,6 +9,8 @@ namespace GridBlazorClientSide.Shared.Models
         [Key]
         public int Id { get; set; }
         public string Description { get; set; }
+        public DateOnly? Date { get; set; }
+        public TimeOnly? Time { get; set; }
         public virtual Person Person { get; set; }
         public PersonType? Type { get; set; }
     }

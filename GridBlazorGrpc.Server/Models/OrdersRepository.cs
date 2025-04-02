@@ -14,12 +14,17 @@ namespace GridBlazorGrpc.Server.Models
 
         public override IQueryable<Order> GetAll()
         {
+            return EfDbSet.Include("Customer").Include("Shipper");
+        }
+
+        public IQueryable<Order> GetAllWithEmployee()
+        {
             return EfDbSet.Include("Customer").Include("Employee").Include("Shipper");
         }
 
         public override async Task<Order> GetById(object id)
         {
-            return await GetAll().SingleOrDefaultAsync(o => o.OrderID == (int)id);
+            return await GetAllWithEmployee().SingleOrDefaultAsync(o => o.OrderID == (int)id);
         }
 
         public async Task Insert(Order order)
@@ -67,5 +72,6 @@ namespace GridBlazorGrpc.Server.Models
         void Delete(Order order);
         void Save();
         IQueryable<Order> GetForClient(string companyName);
+        IQueryable<Order> GetAllWithEmployee();
     }
 }

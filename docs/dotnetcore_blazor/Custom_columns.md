@@ -62,6 +62,16 @@ All customization for columns must be done in the razor page:
                 .SetWidth(220);
     ```
 
+## Collection columns
+
+When there are tables with one-to-many relationship, each table can reference the other one on the model definition. In this case you can define a grid column that shows the count of the referenced collection. You should use the contructor of the **Add** method to create the column including the collection expression as parameter, as a normal column definition:
+
+```c#
+    Columns.Add(o => o.OrderDatails);
+```
+
+This column can be filtered, sorted and searched as any other one.
+
 ## Component columns
 
 Sometimes you need to add a column that renders a component. In this case you must use an empty contructor of the **Add** method to create a column and its **RenderComponentAs** method to define the content that will be rendered in it:
@@ -93,6 +103,17 @@ This is an example of this type of component:
 ```
 
 Remember that sorting and filtering will not work on component columns.
+
+## Not mapped columns
+
+If you need to add a column that is not mapped to a database and the its property is configured with the **NotMapped** attribute, you must use the **SetNotDbMapped** method to configure it properly:
+
+```c#
+    Columns.Add(o => o.CalculatedTotal)
+	    .Titled("Total")
+        .SetNotDbMapped(true);
+```
+Remember that sorting, filtering and searching will not work on not mapped columns.
 
 ## Not connected columns
 
@@ -170,6 +191,7 @@ Titled | Setup the column header text | Columns.Add(x=>x.Name).Titled("Name of p
 Encoded | Enable or disable encoding column values | Columns.Add(x=>x.Name).Encoded(false);
 Sanitized | If encoding is disabled sanitize column value from XSS attacks | Columns.Add(x=>x.Name).Encoded(false).Sanitize(false);
 SetWidth | Setup width of current column | Columns.Add(x=>x.Name).SetWidth("30%");
+SetNotDbMapped | Configure the current column as not DB mapped | Columns.Add(x=>x.CalculatedTotal).SetNotDbMapped(true);
 RenderComponentAs | Setup delegate to render a component column | Columns.Add().RenderComponentAs(typeof(ButtonCell));
 RenderValueAs | Setup delegate to render column values | Columns.Add(x=>x.Name).RenderValueAs(o => o.Employees.FirstName + " " + o.Employees.LastName);
 Sortable | Enable or disable sorting for current column | Columns.Add(x=>x.Name).Sortable(true);

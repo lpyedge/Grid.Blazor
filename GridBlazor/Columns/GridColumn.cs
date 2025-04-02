@@ -31,7 +31,7 @@ namespace GridBlazor.Columns
         /// <summary>
         ///     Searchers collection for this columns
         /// </summary>
-        private readonly IColumnSearch<T> _search;
+        private IColumnSearch<T> _search;
 
         /// <summary>
         ///     Totals collection for this columns
@@ -77,7 +77,10 @@ namespace GridBlazor.Columns
 
             Hidden = false;
 
-            _filterWidgetTypeName = PropertiesHelper.GetUnderlyingType(typeof(TDataType)).FullName;
+            if (typeof(TDataType).IsGenericType && typeof(TDataType).Name == "ICollection`1")
+                _filterWidgetTypeName = "System.Collections.Generic.ICollection`1";
+            else
+                _filterWidgetTypeName = PropertiesHelper.GetUnderlyingType(typeof(TDataType)).FullName;
             _grid = grid;
 
             #endregion
@@ -128,6 +131,7 @@ namespace GridBlazor.Columns
         public override IColumnSearch<T> Search
         {
             get { return _search; }
+            protected set { _search = value; }
         }
 
         public override IColumnTotals<T> Totals
@@ -305,8 +309,22 @@ namespace GridBlazor.Columns
                         // example: x=>x.Child.Property, when Child is NULL
                     }
 
+                    var type = typeof(TDataType);
+
                     if (nullReferece || value == null)
                         textValue = string.Empty;
+                    else if (type.IsGenericType && type.Name == "ICollection`1" && value != null)
+                    {
+                        var countProperty = type.GetProperty("Count");
+                        if (countProperty != null)
+                        {
+                            textValue = countProperty.GetValue(value).ToString();
+                        }
+                        else
+                        {
+                            textValue = string.Empty;
+                        }
+                    }
                     else
                         textValue = GetFormatedValue(value);
                 }

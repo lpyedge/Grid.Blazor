@@ -9,7 +9,7 @@
 <h1>Grid Sample</h1>
 
 <p>
-    This page contains a grid with a subset count column
+    This page contains a grid with a collection column showing the subset count on the grid
 </p>
 
 <p>
@@ -43,6 +43,7 @@ else
         var client = new GridClient<Order>(gridClientService.GetOrdersGridWithCount, query, false, "ordersGrid", ColumnCollections.OrderColumnsCount, locale)
             .Sortable()
             .Filterable()
+            .Searchable(true, false)
             .SetStriped(true)
             .WithMultipleFilters()
             .WithGridItemsCount();

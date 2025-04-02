@@ -97,7 +97,9 @@ namespace GridBlazorClientSide.Client.ColumnCollections
             .Titled(SharedResource.Freight)
             .Format("{0:#,##0.000}")
             .SetWidth(150)
-            .Sum(true).Average(true).Max(true).Min(true)
+            .Sum(true)
+            .Average(true, c => c.AverageValue.Number != 100 ? "red" : "")
+            .Max(true).Min(true)
             .Calculate("Average 2", x => x.Grid.ItemsCount == 0 ? "" : x.Get("Freight").SumValue.Number / x.Grid.ItemsCount)
             .Calculate("Average 3", x => x.Get("OrderID").SumValue.Number == 0 ? "" : x.Get("Freight").SumValue.Number / x.Get("OrderID").SumValue.Number);
 
@@ -266,7 +268,7 @@ namespace GridBlazorClientSide.Client.ColumnCollections
             .Format("{0:F}");
 
             /* Adding not mapped column, that renders body, using inline Razor html helper */
-            c.Add().Encoded(false).Sanitized(false).SetWidth(100).Css("hidden-xs") //hide on phones
+            c.Add().Encoded(false).Sanitized(false).SetWidth(160).Css("hidden-xs") //hide on phones
             .RenderComponentAs<ButtonDbUpdate>(functions);
 
             /* Adding "Vip customer" column: */
@@ -313,7 +315,11 @@ namespace GridBlazorClientSide.Client.ColumnCollections
             .SetWidth(120).RenderComponentAs<TooltipCell>();
 
             /* Adding "CompanyName" column: */
-            c.Add(o => o.Customer.CompanyName).Titled(SharedResource.CompanyName).SetWidth(250);
+            c.Add(o => o.Customer.CompanyName)
+            .Titled(SharedResource.CompanyName)
+            .ThenSortBy(o => o.OrderDetails)
+            .ThenSortByDescending(o => o.Freight)
+            .SetWidth(250);
 
             /* Adding "ContactName" column: */
             c.Add(o => o.Customer.ContactName).Titled(SharedResource.ContactName);
@@ -328,7 +334,9 @@ namespace GridBlazorClientSide.Client.ColumnCollections
             c.Add(o => o.Customer.IsVip).Titled(SharedResource.IsVip).SetWidth(90).Css("hidden-xs") //hide on phones
             .RenderValueAs(o => o.Customer.IsVip ? Strings.BoolTrueLabel : Strings.BoolFalseLabel);
 
-            c.Add(o => o.OrderDetails.Count).Titled("Details");
+            c.Add(o => o.OrderDetails)
+            .Titled("Details")
+            .Sum(true).Average(true).Max(true).Min(true);
         };
 
         public static Action<IGridColumnCollection<Order>, string> OrderColumnsWithCrud = (c, path) =>

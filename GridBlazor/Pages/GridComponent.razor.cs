@@ -8,6 +8,7 @@ using GridShared.Filtering;
 using GridShared.OData;
 using GridShared.Pagination;
 using GridShared.Sorting;
+using GridShared.Style;
 using GridShared.Utility;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -27,6 +28,7 @@ namespace GridBlazor.Pages
 {
     public partial class GridComponent<T>
     {
+        private IGridBlazorService? _gridBlazorService;
         private bool _fromCrud = false;
         private bool _shouldRender = false;
         internal bool HasSubGrid = false;
@@ -97,6 +99,9 @@ namespace GridBlazor.Pages
         [Inject]
         private IJSRuntime jSRuntime { get; set; }
 
+        [Inject]
+        private IServiceProvider ServiceProvider { get; set; }
+
         public int SelectedRow { get; internal set; } = -1;
 
         public List<int> SelectedRows { get; internal set; } = new List<int>();
@@ -166,6 +171,9 @@ namespace GridBlazor.Pages
         public bool UseMemoryCrudDataService { get; set; } = false;
 
         [Parameter]
+        public CssFramework? CssFramework { get; set; }
+
+        [Parameter]
         public string GridMvcCssClass { get; set; } = "grid-mvc";
 
         [Parameter]
@@ -220,9 +228,25 @@ namespace GridBlazor.Pages
         public string GridCalculationCssClass { get; set; } = "grid-cell";
 
 
+        protected override void OnInitialized()
+        {
+            _gridBlazorService = (IGridBlazorService)ServiceProvider.GetService(typeof(IGridBlazorService));
+            base.OnInitialized();
+        }
+
         protected override void OnParametersSet()
         {
             ((CGrid<T>)Grid).GridComponent = this;
+
+            if (!CssFramework.HasValue)
+            {
+                if (_gridBlazorService != null)
+                    CssFramework = _gridBlazorService.Style;
+                else
+                    CssFramework = GridShared.Style.CssFramework.Bootstrap_4;
+            }
+            Grid.CssFramework = CssFramework.Value;
+            Grid.HtmlClass = new HtmlClass(CssFramework.Value);
 
             _filterComponents = new QueryDictionary<Type>();
             _filterComponents.Add("System.String", typeof(TextFilterComponent<T>));
@@ -244,7 +268,12 @@ namespace GridBlazor.Pages
             _filterComponents.Add("DateTimeLocal", typeof(DateTimeLocalFilterComponent<T>));
             _filterComponents.Add("Week", typeof(WeekFilterComponent<T>));
             _filterComponents.Add("Month", typeof(MonthFilterComponent<T>));
+#if ! NETSTANDARD2_1 && !NET5_0
+            _filterComponents.Add("System.DateOnly", typeof(DateOnlyFilterComponent<T>));
+            _filterComponents.Add("System.TimeOnly", typeof(TimeOnlyFilterComponent<T>));
+#endif
             _filterComponents.Add("System.Boolean", typeof(BooleanFilterComponent<T>));
+            _filterComponents.Add("System.Collections.Generic.ICollection`1", typeof(CollectionFilterComponent<T>));
 
             if (CustomFilters == null)
             {
@@ -1413,6 +1442,7 @@ namespace GridBlazor.Pages
                 if (isValid)
                 {
                     await ShowSpinner();
+                    Item = component.Item;
                     if (Grid.ServerAPI == ServerAPI.OData && !UseMemoryCrudDataService)
                         Item = await ((ICrudODataService<T>)((CGrid<T>)Grid).CrudDataService).Add(Item);
                     else
@@ -1474,6 +1504,7 @@ namespace GridBlazor.Pages
                 if (isValid)
                 {
                     await ShowSpinner();
+                    Item = component.Item;
                     if (((CGrid<T>)Grid).CrudFileService != null)
                         Item = await ((CGrid<T>)Grid).CrudFileService.UpdateFiles(Item, component.Files);
                     await ((CGrid<T>)Grid).CrudDataService.Update(Item);
